@@ -1,0 +1,588 @@
+<% layout("/layouts/boilerplate") %>
+
+<div class="row mt-3">
+
+    <!-- ================= TITLE ================= -->
+
+    <div class="col-8 offset-3">
+        <h3><%= listing.title %></h3>
+    </div>
+
+
+    <!-- ================= LISTING CARD ================= -->
+
+    <div class="card col-6 offset-3 show-card">
+
+        <img
+            src="<%= listing.image?.url || listing.image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945' %>"
+            class="card-img-top show-img"
+            alt="listing_image"
+        >
+
+        <div class="card-body">
+
+            <!-- DESCRIPTION -->
+
+            <p class="card-text">
+                <%= listing.description %>
+            </p>
+
+
+            <!-- PRICE -->
+
+            <p class="card-text">
+                ₹ <%= listing.price.toLocaleString("en-IN") %>
+            </p>
+
+
+            <!-- LOCATION -->
+
+            <p class="card-text">
+                <%= listing.location %>,
+                <%= listing.country %>
+            </p>
+
+
+            <!-- OWNER -->
+
+            <% if (listing.owner) { %>
+
+                <p class="card-text">
+
+                    <b>Owner:</b>
+
+                    <%= listing.owner.username %>
+
+                </p>
+
+            <% } %>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<br>
+
+
+<!-- ================= OWNER ACTIONS ================= -->
+
+<% if (
+    currUser &&
+    listing.owner &&
+    currUser._id.equals(listing.owner._id)
+) { %>
+
+    <div class="btns">
+
+        <!-- EDIT -->
+
+        <a
+            href="/listings/<%= listing._id %>/edit"
+            class="btn btn-dark col-1 offset-3 edit-btn"
+        >
+            Edit
+        </a>
+
+
+        <!-- DELETE -->
+
+        <form
+            method="POST"
+            action="/listings/<%= listing._id %>?_method=DELETE"
+            style="display:inline;"
+        >
+
+            <button
+                type="submit"
+                class="btn btn-dark offset-5"
+            >
+                Delete
+            </button>
+
+        </form>
+
+    </div>
+
+<% } %>
+
+
+<!-- ================= MAP ================= -->
+
+<div class="col-8 offset-3 mb-4 mt-4">
+
+    <hr>
+
+    <h4>Where you'll be</h4>
+
+    <div id="map"></div>
+
+</div>
+
+
+<!-- ================= REVIEW SECTION ================= -->
+
+<div class="col-8 offset-3 mb-3">
+
+    <hr>
+
+    <!-- ================= ADD REVIEW ================= -->
+
+    <% if (currUser) { %>
+
+        <h4>Leave a Review</h4>
+
+        <form
+            action="/listings/<%= listing._id %>/reviews"
+            method="POST"
+            novalidate
+            class="needs-validation"
+        >
+
+            <!-- RATING -->
+
+            <div class="mb-3 mt-3">
+
+                <label class="form-label">
+                    Rating
+                </label>
+
+                <div class="rating-machine">
+
+                    <button
+                        type="button"
+                        class="rating-btn"
+                        id="minusRating"
+                    >
+                        −
+                    </button>
+
+
+                    <div class="rating-display">
+
+                        <span id="ratingValue">
+                            1
+                        </span>
+
+                        <span>
+                            /5
+                        </span>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="rating-btn"
+                        id="plusRating"
+                    >
+                        +
+                    </button>
+
+                </div>
+
+
+                <input
+                    type="hidden"
+                    name="review[rating]"
+                    id="rating"
+                    value="1"
+                    required
+                >
+
+            </div>
+
+
+            <!-- COMMENT -->
+
+            <div class="mb-3 mt-3">
+
+                <label
+                    for="comment"
+                    class="form-label"
+                >
+                    Comment
+                </label>
+
+
+                <textarea
+                    name="review[comment]"
+                    id="comment"
+                    cols="30"
+                    rows="5"
+                    class="form-control"
+                    required
+                ></textarea>
+
+
+                <div class="invalid-feedback">
+                    Please add some comments for review.
+                </div>
+
+            </div>
+
+
+            <!-- SUBMIT -->
+
+            <button
+                type="submit"
+                class="btn btn-outline-dark"
+            >
+                Submit
+            </button>
+
+        </form>
+
+    <% } else { %>
+
+        <p>
+            <a href="/login">Login</a>
+            to leave a review.
+        </p>
+
+    <% } %>
+
+
+    <hr>
+
+
+    <!-- ================= ALL REVIEWS ================= -->
+
+    <h4>All Reviews</h4>
+
+    <div class="row">
+
+        <% if (
+            !listing.reviews ||
+            listing.reviews.length === 0
+        ) { %>
+
+            <p>No reviews yet.</p>
+
+        <% } else { %>
+
+
+            <% listing.reviews.forEach((review) => { %>
+
+                <div class="card col-5 ms-3 mb-3">
+
+                    <div class="card-body">
+
+                        <!-- REVIEW AUTHOR -->
+
+                        <h5 class="card-title">
+
+                            <% if (review.author) { %>
+
+                                <%= review.author.username %>
+
+                            <% } else { %>
+
+                                User
+
+                            <% } %>
+
+                        </h5>
+
+
+                        <!-- RATING -->
+
+                        <p class="card-text">
+
+                            <b>Rating:</b>
+
+                            <span class="review-stars">
+
+                                <% for (
+                                    let i = 1;
+                                    i <= 5;
+                                    i++
+                                ) { %>
+
+                                    <% if (
+                                        i <= review.rating
+                                    ) { %>
+
+                                        <span>★</span>
+
+                                    <% } else { %>
+
+                                        <span class="empty-star">
+                                            ☆
+                                        </span>
+
+                                    <% } %>
+
+                                <% } %>
+
+                            </span>
+
+
+                            <span class="rating-number">
+                                (<%= review.rating %>/5)
+                            </span>
+
+                        </p>
+
+
+                        <!-- COMMENT -->
+
+                        <p class="card-text">
+                            <%= review.comment %>
+                        </p>
+
+                    </div>
+
+
+                    <!-- REVIEW DELETE -->
+
+                    <% if (
+                        currUser &&
+                        review.author &&
+                        currUser._id.equals(
+                            review.author._id
+                        )
+                    ) { %>
+
+                        <form
+                            method="POST"
+                            action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE"
+                            class="mb-3 ms-3"
+                        >
+
+                            <button
+                                type="submit"
+                                class="btn btn-sm btn-dark"
+                            >
+                                Delete
+                            </button>
+
+                        </form>
+
+                    <% } %>
+
+                </div>
+
+            <% }) %>
+
+        <% } %>
+
+    </div>
+
+</div>
+
+
+<!-- ================================================= -->
+<!-- LEAFLET CSS -->
+<!-- ================================================= -->
+
+<link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+
+<!-- ================================================= -->
+<!-- MAP CSS -->
+<!-- ================================================= -->
+
+<style>
+
+    #map {
+        height: 400px;
+        width: 100%;
+        border-radius: 10px;
+        margin-top: 15px;
+    }
+
+</style>
+
+
+<!-- ================================================= -->
+<!-- LEAFLET JS -->
+<!-- ================================================= -->
+
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+
+<!-- ================================================= -->
+<!-- MAP SCRIPT -->
+<!-- ================================================= -->
+
+<script>
+
+    <% if (
+        listing.geometry &&
+        listing.geometry.coordinates &&
+        listing.geometry.coordinates.length === 2
+    ) { %>
+
+
+        // ================= COORDINATES =================
+
+        const coordinates =
+            <%- JSON.stringify(listing.geometry.coordinates) %>;
+
+
+        // MongoDB GeoJSON:
+        // [longitude, latitude]
+
+        const longitude =
+            coordinates[0];
+
+        const latitude =
+            coordinates[1];
+
+
+        console.log(
+            "Longitude:",
+            longitude
+        );
+
+        console.log(
+            "Latitude:",
+            latitude
+        );
+
+
+        // ================= CREATE MAP =================
+
+        const map =
+            L.map("map").setView(
+                [latitude, longitude],
+                13
+            );
+
+
+        // ================= OPEN STREET MAP =================
+
+        L.tileLayer(
+            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            {
+                attribution:
+                    "&copy; OpenStreetMap contributors"
+            }
+        ).addTo(map);
+
+
+        // ================= MARKER =================
+
+        L.marker([
+            latitude,
+            longitude
+        ])
+        .addTo(map)
+        .bindPopup(
+            `<b><%= listing.title %></b><br>
+             <%= listing.location %>, <%= listing.country %>`
+        )
+        .openPopup();
+
+
+    <% } else { %>
+
+
+        // ================= NO COORDINATES =================
+
+        document.getElementById("map").innerHTML =
+
+            `<p class="text-muted">
+                Map location is not available for this listing.
+            </p>`;
+
+
+    <% } %>
+
+</script>
+
+
+<!-- ================================================= -->
+<!-- RATING SCRIPT -->
+<!-- ================================================= -->
+
+<script>
+
+    const ratingInput =
+        document.getElementById("rating");
+
+
+    const ratingValue =
+        document.getElementById("ratingValue");
+
+
+    const minusButton =
+        document.getElementById("minusRating");
+
+
+    const plusButton =
+        document.getElementById("plusRating");
+
+
+    function updateRating(value) {
+
+        ratingInput.value = value;
+
+        ratingValue.textContent = value;
+
+
+        // Restart animation
+
+        ratingValue.classList.remove(
+            "slot-spin"
+        );
+
+
+        void ratingValue.offsetWidth;
+
+
+        ratingValue.classList.add(
+            "slot-spin"
+        );
+
+    }
+
+
+    minusButton.addEventListener(
+        "click",
+        () => {
+
+            let rating =
+                Number(ratingInput.value);
+
+
+            if (rating > 1) {
+
+                rating--;
+
+                updateRating(rating);
+
+            }
+
+        }
+    );
+
+
+    plusButton.addEventListener(
+        "click",
+        () => {
+
+            let rating =
+                Number(ratingInput.value);
+
+
+            if (rating < 5) {
+
+                rating++;
+
+                updateRating(rating);
+
+            }
+
+        }
+    );
+
+</script>
